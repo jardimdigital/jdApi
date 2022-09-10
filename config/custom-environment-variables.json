@@ -1,0 +1,5 @@
+{
+    "jwtPrivateKey": "jd__jwtPrivateKey",
+    "databaseParams": "jd__databaseParams",
+    "whitelist": "jd__whitelist"
+}
