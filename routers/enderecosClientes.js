@@ -20,7 +20,7 @@ Creation Date: 02/09/2022
         cidade:                   Joi.string().max(45).allow(null),
         bairro:                   Joi.string().max(45).allow(null),
         estado:                   Joi.string().max(45).allow(null),
-        cep:                      Joi.string().max(9).allow(null),
+        cep:                      Joi.string().max(9).allow(null, ''),
         diaMes:                   Joi.number().allow(null),
         diaSemana:                Joi.number().allow(null),
         semanaMes:                Joi.number().allow(null),
@@ -29,7 +29,8 @@ Creation Date: 02/09/2022
         padrao:                   Joi.string().max(1).allow(null),
         observacoes:              Joi.string().max(512).allow(null),
         profissionalExclusivo:    Joi.number().allow(null),
-        profissionalPreferencial: Joi.number().allow(null)
+        profissionalPreferencial: Joi.number().allow(null),
+        periodo:                  Joi.number().allow(null)
   }); 
 
   get = async function(req, res, callback) {
@@ -42,7 +43,7 @@ Creation Date: 02/09/2022
   
     const paramsObject = req.body;
 
-    const sqlQuery = "CALL clienteEnderecosCriar(:cliente, :apelido, :logradouro, :complemento, :cep, :georeferenciamento, :ordem, :padrao, :cidade, :bairro, :estado, :profissionalExclusivo, :profissionalPreferencial, :observacoes, :diaSemana, :diaMes, :semanaMes);";
+    const sqlQuery = "CALL clienteEnderecosCriar(:cliente, :apelido, :logradouro, :complemento, :cep, :georeferenciamento, :ordem, :padrao, :cidade, :bairro, :estado, :profissionalExclusivo, :profissionalPreferencial, :observacoes, :diaSemana, :diaMes, :semanaMes, :periodo);";
     callback(sqlQuery, paramsObject);
 
   }
@@ -51,7 +52,7 @@ Creation Date: 02/09/2022
 
     const paramsObject = req.body;
 
-    const sqlQuery = "CALL clienteEnderecosAtualizar(:idEndereco, :cliente, :apelido, :logradouro, :complemento, :cep, :georeferenciamento, :ordem, :padrao, :cidade, :bairro, :estado, :profissionalExclusivo, :profissionalPreferencial, :observacoes, :diaSemana, :diaMes, :semanaMes);";
+    const sqlQuery = "CALL clienteEnderecosAtualizar(:idEndereco, :cliente, :apelido, :logradouro, :complemento, :cep, :georeferenciamento, :ordem, :padrao, :cidade, :bairro, :estado, :profissionalExclusivo, :profissionalPreferencial, :observacoes, :diaSemana, :diaMes, :semanaMes, :periodo);";
     callback(sqlQuery, paramsObject);
 
   }

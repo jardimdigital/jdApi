@@ -263,6 +263,9 @@ const { validationSchema } = require('./routers/enderecosClientes');
  const contatosClientes  = require(__dirname + '/routers/contatosClientes');
  const profissionais     = require(__dirname + '/routers/profissionais');
  const servicos          = require(__dirname + '/routers/servicos');
+ const produtos          = require(__dirname + '/routers/produtos');
+ const recursos          = require(__dirname + '/routers/recursos');
+ const compromissos      = require(__dirname + '/routers/compromissos');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -410,6 +413,116 @@ app.delete('/servicos/:idServico', (req, res) => {
 })
 
 
+ // PRODUTOS  ------------------------------------------------------------------------------------- //
+ 
+ app.get('/produtos/:nomeProduto', (req, res) => {
+  produtos.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/produtos', (req, res) => {
+  if (validatePayload(req, res, produtos.validationSchema))
+    produtos.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.put('/produtos', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, produtos.validationSchema))
+    produtos.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/produtos/:idProduto', (req, res) => {
+  produtos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+
+ // RECURSOS  ------------------------------------------------------------------------------------- //
+ 
+ app.get('/recursos/:nomeRecurso', (req, res) => {
+  recursos.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/recursos', (req, res) => {
+  if (validatePayload(req, res, recursos.validationSchema))
+    recursos.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.put('/recursos', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, recursos.validationSchema))
+    recursos.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/recursos/:idRecurso', (req, res) => {
+  recursos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+//  MANUTENCOES -----------------------------------------------------------------------------
+
+app.get('/manutencoes', (req, res) => {
+  sqlQuery = 'CALL lerUltimasManutencoes(null);'
+  processGetRequest(sqlQuery, null, res);
+})
+
+app.get('/manutencoes/:idCliente', (req, res) => {
+  const params =  { idCliente: req.params.idCliente };
+  sqlQuery = 'CALL lerUltimasManutencoes(:idCliente);'
+  processGetRequest(sqlQuery, params, res);
+})
+
+
+
+ // COMPROMISSOS  ------------------------------------------------------------------------------------- //
+ 
+app.get('/compromissos', (req, res) => {
+  sqlQuery = 'CALL lerCompromissos(null);'
+  processGetRequest(sqlQuery, null, res);
+})
+
+app.get('/compromissos/:idCliente', (req, res) => {
+  compromissos.get(req, res, (sqlQuery, params) => {
+    console.log(params)
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/compromissos', (req, res) => {
+  if (validatePayload(req, res, compromissos.validationSchema))
+    compromissos.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.put('/compromissos', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, compromissos.validationSchema))
+    compromissos.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/compromissos/:idRecurso', (req, res) => {
+  compromissos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+
  // dataCheckin  -------------------------------------------------------------------------------------- //
  
  app.post('/dataCheckin/download', (req, res) => {
@@ -512,6 +625,9 @@ app.delete('/servicos/:idServico', (req, res) => {
        } else {
          res.status(200).json(results[0][0]);
        }
+
+       console.log(sqlQuery, deleteParams);
+
      });
      conn.end();
  
