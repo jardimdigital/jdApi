@@ -266,6 +266,7 @@ const { validationSchema } = require('./routers/enderecosClientes');
  const produtos          = require(__dirname + '/routers/produtos');
  const recursos          = require(__dirname + '/routers/recursos');
  const compromissos      = require(__dirname + '/routers/compromissos');
+ const compromissoItens  = require(__dirname + '/routers/compromissoItens');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -385,6 +386,11 @@ app.delete('/profissionais/:idProfissional', (req, res) => {
 
  // SERVICOS ------------------------------------------------------------------------------------- //
  
+ app.get('/servicos/ativos', (req, res) => {
+    sqlQuery = 'CALL lerServicosAtivos();'
+    processGetRequest(sqlQuery, {}, res);
+})
+
  app.get('/servicos/:nomeServico', (req, res) => {
   servicos.get(req, res, (sqlQuery, params) => {
     processGetRequest(sqlQuery, params, res);
@@ -415,6 +421,12 @@ app.delete('/servicos/:idServico', (req, res) => {
 
  // PRODUTOS  ------------------------------------------------------------------------------------- //
  
+  
+ app.get('/produtos/ativos', (req, res) => {
+  sqlQuery = 'CALL lerProdutosAtivos();'
+  processGetRequest(sqlQuery, {}, res);
+})
+
  app.get('/produtos/:nomeProduto', (req, res) => {
   produtos.get(req, res, (sqlQuery, params) => {
     processGetRequest(sqlQuery, params, res);
@@ -489,12 +501,12 @@ app.get('/manutencoes/:idCliente', (req, res) => {
 
  // COMPROMISSOS  ------------------------------------------------------------------------------------- //
  
-app.get('/compromissos', (req, res) => {
-  sqlQuery = 'CALL lerCompromissos(null);'
-  processGetRequest(sqlQuery, null, res);
+app.get('/compromissos/:idCliente', (req, res) => {
+  sqlQuery = 'CALL lerCompromissos(:idCliente, NULL);'
+  processGetRequest(sqlQuery, {idCliente: req.params.idCliente}, res);
 })
 
-app.get('/compromissos/:idCliente', (req, res) => {
+app.get('/compromissos/:idCliente/:idCompromisso', (req, res) => {
   compromissos.get(req, res, (sqlQuery, params) => {
     console.log(params)
     processGetRequest(sqlQuery, params, res);
@@ -516,8 +528,38 @@ app.put('/compromissos', (req, res) => {
   });
 })
 
-app.delete('/compromissos/:idRecurso', (req, res) => {
+app.delete('/compromissos/:idCompromisso', (req, res) => {
   compromissos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+
+ // COMPROMISSO ITENS  -------------------------------------------------------------------------------- //
+ 
+ app.get('/compromissoItens/:idCompromisso', (req, res) => {
+  compromissoItens.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/compromissoItens', (req, res) => {
+  if (validatePayload(req, res, compromissoItens.validationSchema))
+    compromissoItens.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.put('/compromissoItens', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, compromissoItens.validationSchema))
+    compromissoItens.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
+  compromissoItens.delete(req, res, (sqlQuery, params) => {
       processDelete(sqlQuery, params, res);
   });
 })
@@ -552,7 +594,7 @@ app.delete('/compromissos/:idRecurso', (req, res) => {
            res.end(JSON.stringify({ message: "Error: An unexpected error occured while getting " + sqlQuery }))
            console.log(error);
          } else if (results[0].length === 0) {
-           res.writeHead(404);
+           res.writeHead(204);
            res.end(JSON.stringify({ message: "No rows returned for " + sqlQuery }))
          } else {
              res.json(results[0])

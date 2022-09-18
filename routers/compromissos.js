@@ -12,28 +12,30 @@ Creation Date: 05/09/2022
 const Joi = require('joi');
 
 const validationSchema = Joi.object({
-      idCompromisso: Joi.number(),
-      cliente:       Joi.number(),
-      endereco:      Joi.number(),
-      data:          Joi.string(),
-      periodo:       Joi.string().max(1).required(),
-      veiculo:       Joi.number().allow(null),
-      descricao:     Joi.string().max(512).allow(null),
-      orcamento:     Joi.number().allow(null),
-      status:        Joi.number().allow(null)
+      idCompromisso:      Joi.number().required(),
+      cliente:            Joi.number().required(),
+      endereco:           Joi.number().required(),
+      ordemServico:       Joi.number().allow(null),
+      data:               Joi.string(),
+      periodo:            Joi.number().required(),
+      veiculo:            Joi.number().allow(null),
+      descricao:          Joi.string().max(512).allow(null, ''),
+      orcamento:          Joi.number().allow(null),
+      status:             Joi.number().allow(null),
+      usuarioAtualizacao: Joi.string()
 }); 
 
 get = async function(req, res, callback) {
-  const paramsObject  =  { idCliente: req.params.idCliente };
-  const sqlQuery = "CALL lerCompromissos(:idCliente)";
+  const paramsObject  =  { idCliente: req.params.idCliente,
+                           idCompromisso: req.params.idCompromisso };
+  const sqlQuery = "CALL lerCompromissos(:idCliente, :idCompromisso)";
   callback(sqlQuery, paramsObject);
 }
 
 post = async function (req, res, callback) {
 
   const paramsObject = req.body;
-
-  const sqlQuery = "CALL compromissosCriar(:cliente, :endereco, :data, :periodo, :veiculo, :descricao, :orcamento, :status);";
+  const sqlQuery = "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);";
   callback(sqlQuery, paramsObject);
 
 }
@@ -41,15 +43,14 @@ post = async function (req, res, callback) {
 put = async function (req, res, callback) {
 
   const paramsObject = req.body;
-
-  const sqlQuery = "CALL compromissosAtualizar(:idCmpromisso, :cliente, :endereco, :data, :periodo, :veiculo, :descricao, :orcamento, :status);";
+  const sqlQuery = "CALL compromissosAtualizar(:idCompromisso, :cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);";
   callback(sqlQuery, paramsObject);
 
 }
 
 del = async function (req, res, callback) {
 
-  const paramsObject = { idContato: req.params.idContato }
+  const paramsObject = { idCompromisso: req.params.idCompromisso }
   const sqlQuery = "CALL compromissosExcluir(:idCompromisso)";
   callback(sqlQuery, paramsObject);
       
@@ -60,3 +61,8 @@ module.exports.post = post;
 module.exports.put = put;
 module.exports.delete = del;
 module.exports.validationSchema = validationSchema;
+
+
+
+putQuery: "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data,        :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);"
+sql: "     CALL compromissosCriar('19'    ,        33,             0, '2022-09-16', 1,         NULL,     '', NULL, 2, 'Admin');"
