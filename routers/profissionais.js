@@ -1,10 +1,8 @@
 
 /*
  *
- * 
-  
-Created by Edson Andrade
-Creation Date: 05/09/2022
+    Created by Edson Andrade
+    Creation Date: 05/09/2022
  *
  */
 
@@ -39,7 +37,7 @@ Creation Date: 05/09/2022
   put = async function (req, res, callback) {
 
     const paramsObject = req.body;
-
+    console.log(paramsObject);
     const sqlQuery = "CALL profissionaisAtualizar(:idProfissional, :nome, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
     callback(sqlQuery, paramsObject);
 

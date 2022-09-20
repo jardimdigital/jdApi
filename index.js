@@ -487,13 +487,13 @@ app.delete('/recursos/:idRecurso', (req, res) => {
 //  MANUTENCOES -----------------------------------------------------------------------------
 
 app.get('/manutencoes', (req, res) => {
-  sqlQuery = 'CALL lerUltimasManutencoes(null);'
+  sqlQuery = 'CALL lerUltimasManutencoes(null, null);'
   processGetRequest(sqlQuery, null, res);
 })
 
 app.get('/manutencoes/:idCliente', (req, res) => {
   const params =  { idCliente: req.params.idCliente };
-  sqlQuery = 'CALL lerUltimasManutencoes(:idCliente);'
+  sqlQuery = 'CALL lerUltimasManutencoes(:idCliente, null);'
   processGetRequest(sqlQuery, params, res);
 })
 
@@ -594,8 +594,7 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
            res.end(JSON.stringify({ message: "Error: An unexpected error occured while getting " + sqlQuery }))
            console.log(error);
          } else if (results[0].length === 0) {
-           res.writeHead(204);
-           res.end(JSON.stringify({ message: "No rows returned for " + sqlQuery }))
+           res.status(204).json([]);
          } else {
              res.json(results[0])
          }
