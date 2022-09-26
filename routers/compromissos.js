@@ -22,8 +22,11 @@ const validationSchema = Joi.object({
       descricao:          Joi.string().max(512).allow(null, ''),
       orcamento:          Joi.number().allow(null),
       status:             Joi.number().allow(null),
-      usuarioAtualizacao: Joi.string()
+      usuarioAtualizacao: Joi.string(),
+      profissional:       Joi.number().allow(null)
 }); 
+
+
 
 get = async function(req, res, callback) {
   const paramsObject  =  { idCliente: req.params.idCliente,
@@ -35,15 +38,16 @@ get = async function(req, res, callback) {
 post = async function (req, res, callback) {
 
   const paramsObject = req.body;
-  const sqlQuery = "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);";
+  const sqlQuery = "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao, :profissional);";
   callback(sqlQuery, paramsObject);
 
 }
 
+
 put = async function (req, res, callback) {
 
   const paramsObject = req.body;
-  const sqlQuery = "CALL compromissosAtualizar(:idCompromisso, :cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);";
+  const sqlQuery = "CALL compromissosAtualizar(:idCompromisso, :cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao, :profissional);";
   callback(sqlQuery, paramsObject);
 
 }
@@ -61,8 +65,3 @@ module.exports.post = post;
 module.exports.put = put;
 module.exports.delete = del;
 module.exports.validationSchema = validationSchema;
-
-
-
-putQuery: "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data,        :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao);"
-sql: "     CALL compromissosCriar('19'    ,        33,             0, '2022-09-16', 1,         NULL,     '', NULL, 2, 'Admin');"

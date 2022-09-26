@@ -258,15 +258,16 @@ const { validationSchema } = require('./routers/enderecosClientes');
  
  // Application's handlers
 
- const clientes          = require(__dirname + '/routers/clientes');
- const enderecosClientes = require(__dirname + '/routers/enderecosClientes');
- const contatosClientes  = require(__dirname + '/routers/contatosClientes');
- const profissionais     = require(__dirname + '/routers/profissionais');
- const servicos          = require(__dirname + '/routers/servicos');
- const produtos          = require(__dirname + '/routers/produtos');
- const recursos          = require(__dirname + '/routers/recursos');
- const compromissos      = require(__dirname + '/routers/compromissos');
- const compromissoItens  = require(__dirname + '/routers/compromissoItens');
+ const clientes             = require(__dirname + '/routers/clientes');
+ const enderecosClientes    = require(__dirname + '/routers/enderecosClientes');
+ const contatosClientes     = require(__dirname + '/routers/contatosClientes');
+ const profissionais        = require(__dirname + '/routers/profissionais');
+ const profissionalAgenda   = require(__dirname + '/routers/profissionalAgenda')
+ const servicos             = require(__dirname + '/routers/servicos');
+ const produtos             = require(__dirname + '/routers/produtos');
+ const recursos             = require(__dirname + '/routers/recursos');
+ const compromissos         = require(__dirname + '/routers/compromissos');
+ const compromissoItens     = require(__dirname + '/routers/compromissoItens');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -354,17 +355,29 @@ app.delete('/contatosClientes/:idContato', (req, res) => {
   });
 })
 
- // PROFISSIONAIS CLIENTES ------------------------------------------------------------------------- //
+ // PROFISSIONAIS  ---------------------------------------------------------------------------------- //
  
  app.get('/profissionais/:idProfissional', (req, res) => {
   profissionais.get(req, res, (sqlQuery, params) => {
     processGetRequest(sqlQuery, params, res);
   })
 })
+ 
+app.get('/profissionais/:dataIncial/:dataFinal', (req, res) => {
+    const params = { dataIncial: req.params.dataIncial, dataFinal: req.params.dataFinal };
+    processGetRequest('CALL agendaSemanaProfissional(:dataIncial, :dataFinal);', params, res);
+})
 
 app.post('/profissionais', (req, res) => {
   if (validatePayload(req, res, profissionais.validationSchema))
     profissionais.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.post('/profissionais/agenda', (req, res) => {
+  if (validatePayload(req, res, profissionais.validationSchemaAgenda))
+    profissionais.postAgenda(req, res, (sqlQuery, params) => {
         processPut(sqlQuery, params, res);
     });
 })
@@ -379,6 +392,36 @@ app.put('/profissionais', (req, res) => {
 
 app.delete('/profissionais/:idProfissional', (req, res) => {
   profissionais.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+app.delete('/profissionais/agenda/:profissional/:compromisso', (req, res) => {
+  profissionais.deleteAgenda(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+
+})
+
+
+ // PROFISSIONAIS  AGENDAS ----------------------------------------------------------------------------- //
+ 
+ app.get('/profissionalAgenda/:profissional/:compromisso', (req, res) => {
+  profissionalAgenda.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/profissionalAgenda', (req, res) => {
+  if (validatePayload(req, res, profissionalAgenda.validationSchema))
+  profissionalAgenda.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+
+app.delete('/profissionalAgenda/:profissional/:compromisso', (req, res) => {
+  profissionalAgenda.delete(req, res, (sqlQuery, params) => {
       processDelete(sqlQuery, params, res);
   });
 })
@@ -405,7 +448,6 @@ app.post('/servicos', (req, res) => {
 })
 
 app.put('/servicos', (req, res) => {
-  console.log(req.body)
   if (validatePayload(req, res, servicos.validationSchema))
     servicos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -487,13 +529,13 @@ app.delete('/recursos/:idRecurso', (req, res) => {
 //  MANUTENCOES -----------------------------------------------------------------------------
 
 app.get('/manutencoes', (req, res) => {
-  sqlQuery = 'CALL lerUltimasManutencoes(null, null);'
+  sqlQuery = 'CALL lerAgendasPendentes();'
   processGetRequest(sqlQuery, null, res);
 })
 
 app.get('/manutencoes/:idCliente', (req, res) => {
   const params =  { idCliente: req.params.idCliente };
-  sqlQuery = 'CALL lerUltimasManutencoes(:idCliente, null);'
+  sqlQuery = 'CALL lerCompromissosPendentes(:idCliente, null);'
   processGetRequest(sqlQuery, params, res);
 })
 
@@ -615,6 +657,8 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
        let conn = mysql.createConnection(mySqlConnParams);
        conn.query(sqlQuery, postParams, function (error, results) {
  
+         console.log('post results:  ', results);
+
          if (error) {
            res.status(500).json(error);
          } else {
@@ -636,8 +680,12 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
  async function processPut(sqlQuery, putParams, res) {
  
    try {
+    
      let conn = mysql.createConnection(mySqlConnParams);
        conn.query(sqlQuery, putParams, function (error, results) {
+
+        console.log('put results:  ', results);
+
          if (error) {
            error.putQuery = sqlQuery;
            res.status(500).json(error);
