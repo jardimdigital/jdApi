@@ -16,23 +16,23 @@ _tokens.createToken = async function (req, res, connection) {
     }
 
     // req.body.lifetime or 30 minutes
-    const lifeTime = (req.body.lifetime && ! isNaN(parseInt(req.body.lifetime)) ) ? parseInt(req.body.lifetime) : 1000 * 60 * 30;
+    const lifeTime = (req.body.lifetime && ! isNaN(parseInt(req.body.lifetime)) ) ? parseInt(req.body.lifetime) : 1000 * 60 * 60 * 24 * 7;
 
     console.log(isNaN(parseInt(req.body.lifetime)));
 
     const createdAt = new Date().getTime();
     const expiresAt = createdAt + lifeTime;
 
-    const token = jwt.sign({"client"        : req.body.cliente,
-                            "clientName"    : req.body.nomeCliente,
+    const token = jwt.sign({"idCliente"     : req.body.cliente,
+                            "idUsuario"     : req.body.idUsuario,
+                            "nomeUsuario"   : req.body.nomeUsuario,
+                            "login"         : req.body.login,
                             "email"         : req.body.email,
-                            "user"          : req.body.idUsuario,
                             "createdAt"     : createdAt,
                             "expiresAt"     : expiresAt },  
                             configEnv.get('jwtPrivateKey'), 
                             { expiresIn: config.tokenLifeTime});
 
-    const postQuery = "CALL tokensPost(:idCliente, :idUsuario, :criadoEm, :expiraEm, :token);"; 
 
     let createdAtDateTime = new Date(createdAt);
     let expiresAtDateTime = new Date(expiresAt);
@@ -40,13 +40,15 @@ _tokens.createToken = async function (req, res, connection) {
     let createdAtLong       = createdAtDateTime.getFullYear() + '/' + createdAtDateTime.getMonth() + '/' + createdAtDateTime.getDate() + ' ' + createdAtDateTime.toLocaleTimeString('en-US');
     let expiresAtDateLong   = expiresAtDateTime.getFullYear() + '/' + expiresAtDateTime.getMonth() + '/' + expiresAtDateTime.getDate() + ' ' + expiresAtDateTime.toLocaleTimeString('en-US');
 
-    let payload = { idCliente:  req.body.idCliente,
+    let payload = { idCliente:  req.body.cliente,
                     idUsuario:  req.body.idUsuario,
                     criadoEm:   createdAtLong,
                     expiraEm:   expiresAtDateLong,
                     token:      token };        
 
-    
+    const postQuery = "CALL tokensPost(:idCliente, :idUsuario, :criadoEm, :expiraEm, :token);"; 
+
+
     // tokensPost(:client, :user, :moment, :token) will verify existence of user and return token only if user is valid
     // it will also return data necessary to call callback endpoint and send token to client api
     connection.query(postQuery, payload, async function (error, results, fields) {
@@ -79,7 +81,9 @@ _tokens.createToken = async function (req, res, connection) {
                     nomeUsuario:    nomeUsuario,
                     email:          email,
                     usuario:        usuario,
-                    token:          token
+                    token:          token,
+                    expiraEm:       expiresAtDateLong,
+                    expiresAt:      expiresAt
                 });
 
                 

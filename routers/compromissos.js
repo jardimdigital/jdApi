@@ -35,6 +35,13 @@ get = async function(req, res, callback) {
   callback(sqlQuery, paramsObject);
 }
 
+getImpressao = async function(req, res, callback) {
+  const paramsObject  =  { idCompromisso: req.params.idCompromisso };
+  const sqlQuery = "CALL lerCompromissoImpressao(:idCompromisso)";
+  callback(sqlQuery, paramsObject);
+}
+
+
 post = async function (req, res, callback) {
 
   const paramsObject = req.body;
@@ -61,6 +68,7 @@ del = async function (req, res, callback) {
 }
 
 module.exports.get = get;  
+module.exports.getImpressao = getImpressao;  
 module.exports.post = post;
 module.exports.put = put;
 module.exports.delete = del;

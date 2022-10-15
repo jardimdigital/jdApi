@@ -156,16 +156,11 @@ const { validationSchema } = require('./routers/enderecosClientes');
  
  var upload = multer({ storage: storage })
  
- 
- // AUTHENTICATE ------------------------------------------------------------------------------- // 
- app.post('/user/authenticate', (req, res) => {
-   login.login(req, res)
- });
- 
+
  // For Express routes
  function authenticateToken(req, res, next) {
- 
-   if ('/createToken,/toknes/create,/user/authenticate'.indexOf(req.path) === -1) {
+ console.log(req.path)
+   if ('/createToken,/login/'.indexOf(req.path) === -1) {
 
      const authHeader = req.headers['authorization'];
      const token = authHeader && authHeader.split(' ')[1];
@@ -266,8 +261,10 @@ const { validationSchema } = require('./routers/enderecosClientes');
  const servicos             = require(__dirname + '/routers/servicos');
  const produtos             = require(__dirname + '/routers/produtos');
  const recursos             = require(__dirname + '/routers/recursos');
+ const veiculos             = require(__dirname + '/routers/veiculos');
  const compromissos         = require(__dirname + '/routers/compromissos');
  const compromissoItens     = require(__dirname + '/routers/compromissoItens');
+ const compromissoRecursos  = require(__dirname + '/routers/compromissoRecursos');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -362,30 +359,48 @@ app.delete('/contatosClientes/:idContato', (req, res) => {
     processGetRequest(sqlQuery, params, res);
   })
 })
- 
+
+app.get('/profissionais/compromisso/:compromisso', (req, res) => {
+  profissionais.getAgenda(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
 app.get('/profissionais/:dataIncial/:dataFinal', (req, res) => {
-    const params = { dataIncial: req.params.dataIncial, dataFinal: req.params.dataFinal };
-    processGetRequest('CALL agendaSemanaProfissional(:dataIncial, :dataFinal);', params, res);
+  const params = { dataIncial: req.params.dataIncial, dataFinal: req.params.dataFinal };
+  processGetRequest('CALL agendaSemanaProfissional(:dataIncial, :dataFinal);', params, res);
 })
 
 app.post('/profissionais', (req, res) => {
   if (validatePayload(req, res, profissionais.validationSchema))
     profissionais.post(req, res, (sqlQuery, params) => {
-        processPut(sqlQuery, params, res);
+        processPost(sqlQuery, params, res);
     });
 })
 
 app.post('/profissionais/agenda', (req, res) => {
   if (validatePayload(req, res, profissionais.validationSchemaAgenda))
     profissionais.postAgenda(req, res, (sqlQuery, params) => {
-        processPut(sqlQuery, params, res);
+        processPost(sqlQuery, params, res);
+    });
+})
+
+app.post('/profissionais/grupoAgenda', (req, res) => {
+    profissionais.postGrupoAgenda(req, res, (sqlQuery, params) => {
+        processPost(sqlQuery, params, res);
     });
 })
 
 app.put('/profissionais', (req, res) => {
-  console.log(req.body)
   if (validatePayload(req, res, profissionais.validationSchema))
     profissionais.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.put('/profissionais/agenda', (req, res) => {
+  if (validatePayload(req, res, profissionais.validationSchemaAgenda))
+      profissionais.putAgenda(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
   });
 })
@@ -499,6 +514,11 @@ app.delete('/produtos/:idProduto', (req, res) => {
 
  // RECURSOS  ------------------------------------------------------------------------------------- //
  
+ app.get('/recursos/ativos', (req, res) => {
+  sqlQuery = 'CALL lerRecursosAtivos();'
+  processGetRequest(sqlQuery, {}, res);
+})
+
  app.get('/recursos/:nomeRecurso', (req, res) => {
   recursos.get(req, res, (sqlQuery, params) => {
     processGetRequest(sqlQuery, params, res);
@@ -526,11 +546,47 @@ app.delete('/recursos/:idRecurso', (req, res) => {
   });
 })
 
+
+ // VEICULOS  ------------------------------------------------------------------------------------- //
+ 
+ app.get('/veiculos/ativos', (req, res) => {
+  sqlQuery = 'CALL lerVeiculosAtivos();'
+  processGetRequest(sqlQuery, {}, res);
+})
+
+ app.get('/veiculos/:nomeVeiculo', (req, res) => {
+  veiculos.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
+
+app.post('/veiculos', (req, res) => {
+  if (validatePayload(req, res, veiculos.validationSchema))
+    veiculos.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+})
+
+app.put('/veiculos', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, veiculos.validationSchema))
+    veiculos.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/veiculos/:idVeiculo', (req, res) => {
+  veiculos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
 //  MANUTENCOES -----------------------------------------------------------------------------
 
-app.get('/manutencoes', (req, res) => {
-  sqlQuery = 'CALL lerAgendasPendentes();'
-  processGetRequest(sqlQuery, null, res);
+app.get('/manutencoes/:dataInicial/:dataFinal', (req, res) => {
+  sqlQuery = 'CALL lerAgendasPendentes(:dataInicial, :dataFinal);'
+  params = { dataInicial: req.params.dataInicial, dataFinal: req.params.dataFinal}
+  processGetRequest(sqlQuery, params, res);
 })
 
 app.get('/manutencoes/:idCliente', (req, res) => {
@@ -543,6 +599,10 @@ app.get('/manutencoes/:idCliente', (req, res) => {
 
  // COMPROMISSOS  ------------------------------------------------------------------------------------- //
  
+ app.get('/compromissos', (req, res) => {
+  sqlQuery = 'CALL lerCompromissos(NULL, NULL);'
+  processGetRequest(sqlQuery, null, res);
+})
 app.get('/compromissos/:idCliente', (req, res) => {
   sqlQuery = 'CALL lerCompromissos(:idCliente, NULL);'
   processGetRequest(sqlQuery, {idCliente: req.params.idCliente}, res);
@@ -550,9 +610,20 @@ app.get('/compromissos/:idCliente', (req, res) => {
 
 app.get('/compromissos/:idCliente/:idCompromisso', (req, res) => {
   compromissos.get(req, res, (sqlQuery, params) => {
-    console.log(params)
     processGetRequest(sqlQuery, params, res);
   })
+})
+
+app.get('/compromisso/impressao/:idCompromisso', (req, res) => {
+  compromissos.getImpressao(req, res, (sqlQuery, params) => {
+    console.log(params)
+    processGetRequest(sqlQuery, params, res, true);
+  })
+})
+
+app.get('/compromisso/status', (req, res) => {
+  sqlQuery = 'CALL lerStatusCompromisso();'
+  processGetRequest(sqlQuery, null, res);
 })
 
 app.post('/compromissos', (req, res) => {
@@ -606,25 +677,50 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
   });
 })
 
+ // COMPROMISSO RECURSOS  ---------------------------------------------------------------------------- //
+ 
+ app.get('/compromissoRecursos/:idCompromisso', (req, res) => {
+  compromissoRecursos.get(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+})
 
- // dataCheckin  -------------------------------------------------------------------------------------- //
+app.post('/compromissoRecursos', (req, res) => {
+
+  console.log('processing compromissos recursos')
+  if (validatePayload(req, res, compromissoRecursos.validationSchema))
+    compromissoRecursos.post(req, res, (sqlQuery, params) => {
+        processPost(sqlQuery, params, res);
+    });
+})
+
+app.put('/compromissoRecursos', (req, res) => {
+  console.log(req.body)
+  if (validatePayload(req, res, compromissoRecursos.validationSchema))
+    compromissoRecursos.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+})
+
+app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
+  compromissoRecursos.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+})
+
+
+ // LOGIN  -------------------------------------------------------------------------------------- //
  
- app.post('/dataCheckin/download', (req, res) => {
+ app.post('/login', (req, res) => {
  
-   const sqlQuery = "CALL uploadedFieldsReadAllColumns(:client, :user, :form, :date);";
-   const paramsObject = {  client:       req.auth.client, 
-                           language:     req.auth.userLanguage,
-                           user:         req.body.user,
-                           form:         req.body.form,
-                           date:         req.body.date,
-                           action:       req.body.action };
-   processGetRequest('uploadedData', sqlQuery, paramsObject, true, res);
- 
- })
+  const sqlQuery = "CALL autenticaUsuario(:login, :senha);";
+  processPost(sqlQuery, req.body, res);
+
+ });
  
  // SUPPORT FUNCTIONS  ---------------------------------------------------------------------- //
  
- async function processGetRequest(sqlQuery, paramsObject, res) {
+ async function processGetRequest(sqlQuery, paramsObject, res, returnAll = false) {
  
      try {
  
@@ -638,7 +734,7 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
          } else if (results[0].length === 0) {
            res.status(204).json([]);
          } else {
-             res.json(results[0])
+            returnAll === true ? res.json(results) : res.json(results[0])
          }
        });
        conn.end();
@@ -654,21 +750,27 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
  async function processPost(sqlQuery, postParams, res) {
  
      try {
+
        let conn = mysql.createConnection(mySqlConnParams);
        conn.query(sqlQuery, postParams, function (error, results) {
- 
-         console.log('post results:  ', results);
 
-         if (error) {
-           res.status(500).json(error);
-         } else {
-           if (results[0][0].code)
-             res.status(results[0][0].code).json(results[0][0]);
-           else 
-             res.status(200).json(results[0][0]);
-         }
-       });
-       conn.end();
+        if (error) { res.status(500).json(error); return; }
+
+        if (results[0].length === 0) { res.status(204).json([]); return; }
+         
+        if (results[0][0].code) { res.status(results[0][0].code).json(results[0][0]); return; }
+        
+        if (Array.isArray(results[0]) && Array.isArray(results[0][0])) {
+          res.status(200).json(results[0])  // return array 
+          return;
+        }
+
+        res.status(200).json(results[0][0]);  // return object
+
+      });
+       
+      conn.end();
+
      } catch (error) {
        console.log('um error aconteceu', error)
        res.writeHead(500);
@@ -681,16 +783,21 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
  
    try {
     
+    console.log(sqlQuery, putParams)
      let conn = mysql.createConnection(mySqlConnParams);
-       conn.query(sqlQuery, putParams, function (error, results) {
 
-        console.log('put results:  ', results);
+       conn.query(sqlQuery, putParams, function (error, results) {
 
          if (error) {
            error.putQuery = sqlQuery;
            res.status(500).json(error);
-         } else {
-           res.status(200).json(results[0][0]);
+          } else {
+          
+            if (Array.isArray(results[0]) && Array.isArray(results[0][0]))
+              res.status(200).json(results[0])  // return array 
+            else 
+              res.status(200).json(results[0][0]);  // return object
+
          }
        });
        conn.end();
@@ -707,16 +814,11 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
    try {
      let conn = mysql.createConnection(mySqlConnParams);
      conn.query(sqlQuery, deleteParams, function (error, results, fields) {
- 
        if (error) {
-         error.putQuery = sqlQuery;
          res.status(500).json(error);
        } else {
          res.status(200).json(results[0][0]);
        }
-
-       console.log(sqlQuery, deleteParams);
-
      });
      conn.end();
  

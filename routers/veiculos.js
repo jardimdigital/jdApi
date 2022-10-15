@@ -3,7 +3,7 @@
  * 
   
 Created by Edson Andrade
-Creation Date: 10/09/2022
+Creation Date: 29/09/2022
  *
  */
 
@@ -11,17 +11,15 @@ Creation Date: 10/09/2022
 const Joi = require('joi');
 
 const validationSchema = Joi.object({
-      idProduto:      Joi.number(),
+      idVeiculo:      Joi.number(),
       nome:           Joi.string().max(45).required(),
-      descricao:      Joi.string().max(512).allow(null, ''),
-      ativo:          Joi.string().max(01).required(),
-      valorUnitario:  Joi.number().allow(0, null),
-      precoCusto:     Joi.number().allow(0, null)
+      placa:          Joi.string().max(10).required(),
+      ativo:          Joi.string().max(01).required()
 }); 
 
 get = async function(req, res, callback) {
-  const paramsObject  =  { nomeProduto: req.params.nomeProduto };
-  const sqlQuery = "CALL lerProdutos(:nomeProduto)";
+  const paramsObject  =  { nomeVeiculo: req.params.nomeVeiculo };
+  const sqlQuery = "CALL lerVeiculos(:nomeVeiculo)";
   callback(sqlQuery, paramsObject);
 }
 
@@ -29,7 +27,7 @@ post = async function (req, res, callback) {
 
   const paramsObject = req.body;
 
-  const sqlQuery = "CALL produtosCriar(:nome, :descricao, :valorUnitario, :precoCusto, :ativo);";
+  const sqlQuery = "CALL veiculosCriar(:nome, :placa, :ativo);";
   callback(sqlQuery, paramsObject);
 
 }
@@ -38,15 +36,15 @@ put = async function (req, res, callback) {
 
   const paramsObject = req.body;
 
-  const sqlQuery = "CALL produtosAtualizar(:idProduto, :nome, :descricao, :valorUnitario, :precoCusto, :ativo);";
+  const sqlQuery = "CALL veiculosAtualizar(:idVeiculo, :nome, :placa, :ativo);";
   callback(sqlQuery, paramsObject);
 
 }
 
 del = async function (req, res, callback) {
 
-  const paramsObject = { idProduto: req.params.idProduto }
-  const sqlQuery = "CALL produtosExcluir(:idProduto)";
+  const paramsObject = { idVeiculo: req.params.idVeiculo }
+  const sqlQuery = "CALL veiculosExcluir(:idVeiculo)";
   callback(sqlQuery, paramsObject);
       
 }

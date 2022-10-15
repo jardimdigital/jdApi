@@ -22,9 +22,10 @@
   const validationSchemaAgenda =  Joi.object({
         profissional:             Joi.number().required(),
         compromisso:              Joi.number().required(),
-        dataCompromisso:          Joi.string().required(),
+        dataAgenda:               Joi.string().required(),
         usuario:                  Joi.string().required(),
-        origem:                   Joi.number().required()
+        origem:                   Joi.number().required(),
+        profAnterior:             Joi.number().allow(null)
   }); 
 
   get = async function(req, res, callback) {
@@ -33,6 +34,14 @@
     callback(sqlQuery, paramsObject);
   }
   
+  getAgenda = async function(req, res, callback) {
+    const paramsObject  =  { compromisso: req.params.compromisso };
+    const sqlQuery = "CALL lerProfissionaisCompromisso(:compromisso)";
+    callback(sqlQuery, paramsObject);
+  }
+  
+
+
   post = async function (req, res, callback) {
     const paramsObject = req.body;
     const sqlQuery = "CALL profissionaisCriar(:nome, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
@@ -40,10 +49,15 @@
 
   }
 
-
   postAgenda = async function (req, res, callback) {
     const paramsObject = req.body;
-    const sqlQuery = "CALL profissionalAgendaCriar(:profissional, :compromisso, :dataCompromisso, :usuario, :origem);";
+    const sqlQuery = "CALL profissionalAgendaCriar(:profissional, :compromisso, :dataAgenda, :usuario, :origem);";
+    callback(sqlQuery, paramsObject);
+  }
+
+  postGrupoAgenda = async function (req, res, callback) {
+    const paramsObject = req.body;
+    const sqlQuery = "CALL profissionaisAgendasCriar(:compromisso, :profissionais, :dataCompromisso, :usuario, :origem);"
     callback(sqlQuery, paramsObject);
   }
 
@@ -54,6 +68,12 @@
     callback(sqlQuery, paramsObject);
   }
 
+  putAgenda = async function (req, res, callback) {
+    const paramsObject = req.body;
+    const sqlQuery = "CALL profissionalAgendaAlterar(:profissional, :compromisso, :dataAgenda, :usuario, :origem, :profAnterior);"
+    callback(sqlQuery, paramsObject);
+  }
+
 
   del = async function (req, res, callback) {
     const paramsObject = { idProfissional: req.params.idProfissional }
@@ -61,17 +81,21 @@
     callback(sqlQuery, paramsObject);    
   }
   
-  delAgenda = async function (req, res, callback) {
+  deleteAgenda = async function (req, res, callback) {
     const paramsObject = { profissional: req.params.profissional, compromisso: req.params.compromisso }
+    console.log(paramsObject)
     const sqlQuery = "CALL profissionalAgendaExcluir(:profissional, :compromisso)";
     callback(sqlQuery, paramsObject); 
   }
 
   module.exports.get = get;  
+  module.exports.getAgenda = getAgenda;  
   module.exports.post = post;
   module.exports.postAgenda = postAgenda;
+  module.exports.postGrupoAgenda = postGrupoAgenda;
   module.exports.put = put;
+  module.exports.putAgenda = putAgenda;
   module.exports.delete = del;
-  module.exports.deleteAgenda = delAgenda;
+  module.exports.deleteAgenda = deleteAgenda;
   module.exports.validationSchema = validationSchema;
   module.exports.validationSchemaAgenda = validationSchemaAgenda;
