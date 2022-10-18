@@ -51,88 +51,92 @@
  const http = require('http');
  const https = require('https');
  
- // Instantiate the HTTPS server options
+  // Instantiate the HTTPS server options
 
- 
- const fs = require('fs');
 
- var httpsAvailable = fs.existsSync(/https/)
+  const fs = require('fs');
 
- var httpsServerOptions;
+  var httpsAvailable = fs.existsSync('./https/comodo')
+  console.log(httpsAvailable)
+  var httpsServerOptions;
 
-if (httpsAvailable) {
+  if (httpsAvailable) {
   var httpsServerOptions = {
-    cert: fs.readFileSync(__dirname + '/https/comodo/67_205_142_44.crt'),
-    key: fs.readFileSync(__dirname + '/https/comodo/67_205_142_44.key')
+    cert: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.crt'),
+    key: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.key'),
+    ca: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.ca-bundle')
     }; 
-}
+  }
 
+  const express = require('express');
+  var app = express();
+  var httpServer = http.createServer(app);
+  var httpsServer = https.createServer(httpsServerOptions, app);
 
+  const config = require(__dirname + '/lib/config');
+  const tokens = require(__dirname + '/routers/tokens');
 
-const express = require('express');
-var app = express();
-var httpServer = http.createServer(app);
-var httpsServer = https.createServer(httpsServerOptions, app);
-
-const config = require(__dirname + '/lib/config');
-const tokens = require(__dirname + '/routers/tokens');
-
-httpServer.listen(config.httpPort, () => {
+  httpServer.listen(config.httpPort, () => {
   console.log('HTTP Express server is listening on port ' + config.httpPort);
-});
- 
-if (httpsAvailable) {
+  });
+
+  if (httpsAvailable) {
   httpsServer.listen(config.httpsPort, () => {
     console.log('HTTPS Express server listening on port ' + config.httpsPort);
   });
-}
- 
-const jwt          = require('jsonwebtoken');
-const cors         = require('cors');
-const path         = require('path')
-const csv          = require("csvtojson");
+  }
+
+  const jwt          = require('jsonwebtoken');
+  const cors         = require('cors');
+  const path         = require('path')
+  const csv          = require("csvtojson");
 
 
-const readXlsxFile = require('read-excel-file/node'); 
-const whitelist = configEnv.get('whitelist');
+  const readXlsxFile = require('read-excel-file/node'); 
+  const whitelist = configEnv.get('whitelist');
  
- var corsOptions = {
-   
-   origin: function (origin, callback) {
-     if (whitelist !=  undefined && whitelist.indexOf(origin) !== -1) {
-       callback(null, true);
-     } else {
-       callback(new Error('Not allowed by CORS'))
-     }
-   }
- 
- }
- 
+ console.log('accessControlAllowOrigin ', config.accessControlAllowOrigin);
+
  // Add headers
+ 
  app.use(function (req, res, next) {
  
-   console.log('accessControlAllowOrigin ', config.accessControlAllowOrigin);
-   
-   // Website you wish to allow to connect
-   res.setHeader('Access-Control-Allow-Origin', config.accessControlAllowOrigin);
- 
-   // Request methods you wish to allow
-   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
- 
-   // Request headers you wish to allow
-   res.setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Origin, X-Requested-With, content-type, id');
- 
-   // Set to true if you need the website to include cookies in the requests sent
-   // to the API (e.g. in case you use sessions)
-   res.setHeader('Access-Control-Allow-Credentials', true);
-   
-   // res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, ID, Token");
-   // Pass to next layer of middleware
-   
-   next();
+  console.log('passing app.use for CORS');
+
+  // Website you wish to allow to connect
+  res.setHeader('Access-Control-Allow-Origin', config.accessControlAllowOrigin);
+
+  // Request methods you wish to allow
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+
+  // Request headers you wish to allow
+  res.setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Origin, X-Requested-With, content-type, id');
+
+  // Set to true if you need the website to include cookies in the requests sent
+  // to the API (e.g. in case you use sessions)
+  res.setHeader('Access-Control-Allow-Credentials', true);
+
+  // res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, ID, Token");
+  // Pass to next layer of middleware
+
+    next();
  
  });
- 
+
+
+ var corsOptions = {
+   
+  origin: function (origin, callback) {
+    console.log(whitelist)
+    if (whitelist !=  undefined && whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
+
+ }
+
  app.options('*', cors(corsOptions));
  
  app.use(express.json()); // for parsing application/json
@@ -142,7 +146,7 @@ const whitelist = configEnv.get('whitelist');
  
  const multer = require('multer');
  const { string } = require('joi');
-const { validationSchema } = require('./routers/enderecosClientes');
+ const { json } = require('express');
  
  const storage = multer.diskStorage({
    destination: function (req, file, cb) {
@@ -335,7 +339,7 @@ app.post('/contatosClientes', (req, res) => {
   if (validatePayload(req, res, contatosClientes.validationSchema))
     contatosClientes.post(req, res, (sqlQuery, params) => {
         processPut(sqlQuery, params, res);
-    });
+    }); 
 })
 
 app.put('/contatosClientes', (req, res) => {
@@ -788,18 +792,21 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
 
        conn.query(sqlQuery, putParams, function (error, results) {
 
-         if (error) {
-           error.putQuery = sqlQuery;
-           res.status(500).json(error);
-          } else {
-          
-            if (Array.isArray(results[0]) && Array.isArray(results[0][0]))
-              res.status(200).json(results[0])  // return array 
-            else 
-              res.status(200).json(results[0][0]);  // return object
+        if (error) { res.status(500).json(error); return; }
 
-         }
+        if (results[0].length === 0) { res.status(204).json([]); return; }
+         
+        if (results[0][0].code) { res.status(results[0][0].code).json(results[0][0]); return; }
+        
+        if (Array.isArray(results[0]) && Array.isArray(results[0][0])) {
+          res.status(200).json(results[0])  // return array 
+          return;
+        }
+
+        res.status(200).json(results[0][0]);  // return object
+
        });
+
        conn.end();
  
    } catch (error) {
