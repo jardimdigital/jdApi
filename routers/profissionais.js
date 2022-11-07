@@ -12,6 +12,9 @@
   const validationSchema = Joi.object({
         idProfissional:    Joi.number(),
         nome:              Joi.string().max(45).required(),
+        apelido:           Joi.string().max(25).required(),
+        identidade:        Joi.string().max(20).allow('', null),
+        nascimento:        Joi.string().max(10).allow('', null),
         tipo:              Joi.string().max(01).required(),
         ativo:             Joi.string().max(01).required(),
         habilitado:        Joi.string().max(01).required(),
@@ -40,11 +43,9 @@
     callback(sqlQuery, paramsObject);
   }
   
-
-
   post = async function (req, res, callback) {
     const paramsObject = req.body;
-    const sqlQuery = "CALL profissionaisCriar(:nome, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
+    const sqlQuery = "CALL profissionaisCriar(:nome, :tipo, :apelido, :identidade, :nascimento, :ativo, :habilitado, :diasTrabalho, :servicos);";
     callback(sqlQuery, paramsObject);
 
   }
@@ -64,7 +65,7 @@
   put = async function (req, res, callback) {
     const paramsObject = req.body;
     console.log(paramsObject);
-    const sqlQuery = "CALL profissionaisAtualizar(:idProfissional, :nome, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
+    const sqlQuery = "CALL profissionaisAtualizar(:idProfissional, :nome, :apelido, :identidade, :nascimento, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
     callback(sqlQuery, paramsObject);
   }
 

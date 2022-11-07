@@ -169,6 +169,9 @@
      const authHeader = req.headers['authorization'];
      const token = authHeader && authHeader.split(' ')[1];
  
+      console.log('token!!!!!!!!!!!', token)
+
+
      if (token == null) 
          return res.status(401).json({ code: 401,
                                        message: 'Token was not provided' });
@@ -269,6 +272,7 @@
  const compromissos         = require(__dirname + '/routers/compromissos');
  const compromissoItens     = require(__dirname + '/routers/compromissoItens');
  const compromissoRecursos  = require(__dirname + '/routers/compromissoRecursos');
+ const usuarios             = require(__dirname + '/routers/usuarios');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -451,7 +455,7 @@ app.delete('/profissionalAgenda/:profissional/:compromisso', (req, res) => {
  app.get('/servicos/ativos', (req, res) => {
     sqlQuery = 'CALL lerServicosAtivos();'
     processGetRequest(sqlQuery, {}, res);
-})
+  })
 
  app.get('/servicos/:nomeServico', (req, res) => {
   servicos.get(req, res, (sqlQuery, params) => {
@@ -459,11 +463,24 @@ app.delete('/profissionalAgenda/:profissional/:compromisso', (req, res) => {
   })
 })
 
+app.get('/servicos/recursos/:idServico', (req, res) => {
+  params = { idServico: req.params.idServico }
+  sqlQuery = 'CALL lerRecursosServico(:idServico);';
+  processGetRequest(sqlQuery, params, res);
+})
+
+
 app.post('/servicos', (req, res) => {
   if (validatePayload(req, res, servicos.validationSchema))
     servicos.post(req, res, (sqlQuery, params) => {
         processPut(sqlQuery, params, res);
     });
+})
+
+app.post('/servicos/recursos', (req, res) => {
+  servicos.postRecursosServicos(req, res, (sqlQuery, params) => {
+      processPost(sqlQuery, params, res);
+  });
 })
 
 app.put('/servicos', (req, res) => {
@@ -712,6 +729,39 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
   });
 })
 
+ // USUARIOS ------------------------------------------------------------------------------------- //
+ 
+  app.get('/usuarios/:nomeUsuario', (req, res) => {
+    usuarios.get(req, res, (sqlQuery, params) => {
+      processGetRequest(sqlQuery, params, res);
+    })
+  })
+
+  app.post('/usuarios', (req, res) => {
+    if (validatePayload(req, res, usuarios.validationSchema))
+      usuarios.post(req, res, (sqlQuery, params) => {
+          processPut(sqlQuery, params, res);
+      });
+  })
+
+  app.put('/usuarios', (req, res) => {
+    if (validatePayload(req, res, usuarios.validationSchema))
+      usuarios.put(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+  })
+
+  app.delete('/usuarios/:idUsuario', (req, res) => {
+    usuarios.delete(req, res, (sqlQuery, params) => {
+        processDelete(sqlQuery, params, res);
+    });
+  })
+
+
+  app.get('/gruposAcessos', (req, res) => {
+    sqlQuery = 'CALL lerGruposAcesso();'
+    processGetRequest(sqlQuery, {}, res);
+})
 
  // LOGIN  -------------------------------------------------------------------------------------- //
  
@@ -722,6 +772,19 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
 
  });
  
+  // WEATHER  -------------------------------------------------------------------------------------- //
+ 
+  app.get('/weather/:today/:hour/:startDate/:endDate', (req, res) => {
+    const sqlQuery = "CALL lerWeatherInfo(:today, :hour, :startDate, :endDate);";
+    const params = { today: req.params.today, hour: req.params.hour, startDate: req.params.startDate, endDate: req.params.endDate };
+    processGetRequest(sqlQuery, params, res);
+  });
+
+  app.post('/weather', (req, res) => {
+    const sqlQuery = "CALL weatherCriar(:date, :hour, :weatherInfo);";
+    processPost(sqlQuery, req.body, res);
+  });
+
  // SUPPORT FUNCTIONS  ---------------------------------------------------------------------- //
  
  async function processGetRequest(sqlQuery, paramsObject, res, returnAll = false) {
@@ -731,7 +794,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
        let conn = mysql.createConnection(mySqlConnParams);
        conn.query(sqlQuery, paramsObject, function (error, results) {
  
-         if (error) {
+         if (error || results === undefined) {
            res.writeHead(500);
            res.end(JSON.stringify({ message: "Error: An unexpected error occured while getting " + sqlQuery }))
            console.log(error);
@@ -758,7 +821,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
        let conn = mysql.createConnection(mySqlConnParams);
        conn.query(sqlQuery, postParams, function (error, results) {
 
-        if (error) { res.status(500).json(error); return; }
+        if (error || results === undefined) { res.status(500).json(error); return; }
 
         if (results[0].length === 0) { res.status(204).json([]); return; }
          
@@ -792,7 +855,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
 
        conn.query(sqlQuery, putParams, function (error, results) {
 
-        if (error) { res.status(500).json(error); return; }
+        if (error || results === undefined) { res.status(500).json(error); return; }
 
         if (results[0].length === 0) { res.status(204).json([]); return; }
          
@@ -821,7 +884,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
    try {
      let conn = mysql.createConnection(mySqlConnParams);
      conn.query(sqlQuery, deleteParams, function (error, results, fields) {
-       if (error) {
+       if (error || results === undefined) {
          res.status(500).json(error);
        } else {
          res.status(200).json(results[0][0]);

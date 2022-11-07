@@ -34,6 +34,13 @@ post = async function (req, res, callback) {
 
 }
 
+postRecursosServicos = async function (req, res, callback) {
+  const paramsObject = req.body;
+  const sqlQuery = "CALL recursosServicoCriar(:servico, :recursos);"
+  callback(sqlQuery, paramsObject);
+}
+
+
 put = async function (req, res, callback) {
 
   const paramsObject = req.body;
@@ -53,6 +60,7 @@ del = async function (req, res, callback) {
 
 module.exports.get = get;  
 module.exports.post = post;
+module.exports.postRecursosServicos = postRecursosServicos;
 module.exports.put = put;
 module.exports.delete = del;
 module.exports.validationSchema = validationSchema;
