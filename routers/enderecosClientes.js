@@ -8,7 +8,6 @@ Creation Date: 02/09/2022
  *
  */
 
-
   const Joi = require('joi');
 
   const validationSchema = Joi.object({
@@ -16,18 +15,18 @@ Creation Date: 02/09/2022
         cliente:                  Joi.number(),
         apelido:                  Joi.string().max(45).required(),
         logradouro:               Joi.string().max(45).required(),
-        complemento:              Joi.string().max(45).allow(null),
-        cidade:                   Joi.string().max(45).allow(null),
-        bairro:                   Joi.string().max(45).allow(null),
-        estado:                   Joi.string().max(45).allow(null),
+        complemento:              Joi.string().max(45).allow(null, ''),
+        cidade:                   Joi.string().max(45).allow(null, ''),
+        bairro:                   Joi.string().max(45).allow(null, ''),
+        estado:                   Joi.string().max(45).allow(null, ''),
         cep:                      Joi.string().max(9).allow(null, ''),
         diaMes:                   Joi.number().allow(null),
         diaSemana:                Joi.number().allow(null),
         semanaMes:                Joi.number().allow(null),
         georeferenciamento:       Joi.string().max(40).allow(null, ''),
         ordem:                    Joi.number().allow(null),
-        padrao:                   Joi.string().max(1).allow(null),
-        observacoes:              Joi.string().max(512).allow(null),
+        padrao:                   Joi.string().max(1).allow(null, ''),
+        observacoes:              Joi.string().max(512).allow(null, ''),
         profissionalExclusivo:    Joi.number().allow(null),
         profissionalPreferencial: Joi.number().allow(null),
         periodo:                  Joi.number().allow(null)
