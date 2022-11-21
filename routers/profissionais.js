@@ -45,9 +45,8 @@
   
   post = async function (req, res, callback) {
     const paramsObject = req.body;
-    const sqlQuery = "CALL profissionaisCriar(:nome, :tipo, :apelido, :identidade, :nascimento, :ativo, :habilitado, :diasTrabalho, :servicos);";
-    callback(sqlQuery, paramsObject);
-
+    const sqlQuery = "CALL profissionaisCriar(:nome, :apelido, :identidade, :nascimento, :tipo, :ativo, :habilitado, :diasTrabalho, :servicos);";
+    callback(sqlQuery, paramsObject);         
   }
 
   postAgenda = async function (req, res, callback) {

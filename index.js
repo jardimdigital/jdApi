@@ -169,15 +169,12 @@
      const authHeader = req.headers['authorization'];
      const token = authHeader && authHeader.split(' ')[1];
  
-      console.log('token!!!!!!!!!!!', token)
-
-
      if (token == null) 
          return res.status(401).json({ code: 401,
                                        message: 'Token was not provided' });
      
      jwt.verify(token, configEnv.get('jwtPrivateKey'), (err, tokenPayload) => {
-       if (err) return res.status(403).json(err);
+       if (err) return res.status(401).json(err);
  
        //
        //  ToDo: check for authorized routes.
@@ -202,12 +199,10 @@
   console.log("tokens: ",  tokens);
 
    try {
-    console.log(mySqlConnParams)
      let conn = mysql.createConnection(mySqlConnParams);
      tokens.createToken(req, res, conn);
      conn.end();
    } catch (error) {
-     console.log('um error aconteceu', error)
      res.writeHead(500);
      res.end(JSON.stringify({ message: "Alert! Database connection attempt failed while createing token " }));
    }
@@ -273,6 +268,8 @@
  const compromissoItens     = require(__dirname + '/routers/compromissoItens');
  const compromissoRecursos  = require(__dirname + '/routers/compromissoRecursos');
  const usuarios             = require(__dirname + '/routers/usuarios');
+ const menus                = require(__dirname + '/routers/menus');
+ const ordensServico        = require(__dirname + '/routers/ordensServico');
  
  
  // CLIENTES -------------------------------------------------------------------------------- //
@@ -347,7 +344,6 @@ app.post('/contatosClientes', (req, res) => {
 })
 
 app.put('/contatosClientes', (req, res) => {
-  console.log(req.body)
   if (validatePayload(req, res, contatosClientes.validationSchema))
     contatosClientes.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -366,7 +362,7 @@ app.delete('/contatosClientes/:idContato', (req, res) => {
   profissionais.get(req, res, (sqlQuery, params) => {
     processGetRequest(sqlQuery, params, res);
   })
-})
+});
 
 app.get('/profissionais/compromisso/:compromisso', (req, res) => {
   profissionais.getAgenda(req, res, (sqlQuery, params) => {
@@ -519,7 +515,6 @@ app.post('/produtos', (req, res) => {
 })
 
 app.put('/produtos', (req, res) => {
-  console.log(req.body)
   if (validatePayload(req, res, produtos.validationSchema))
     produtos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -554,7 +549,7 @@ app.post('/recursos', (req, res) => {
 })
 
 app.put('/recursos', (req, res) => {
-  console.log(req.body)
+  
   if (validatePayload(req, res, recursos.validationSchema))
     recursos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -589,7 +584,7 @@ app.post('/veiculos', (req, res) => {
 })
 
 app.put('/veiculos', (req, res) => {
-  console.log(req.body)
+  
   if (validatePayload(req, res, veiculos.validationSchema))
     veiculos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -655,7 +650,7 @@ app.post('/compromissos', (req, res) => {
 })
 
 app.put('/compromissos', (req, res) => {
-  console.log(req.body)
+  
   if (validatePayload(req, res, compromissos.validationSchema))
     compromissos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -685,7 +680,6 @@ app.post('/compromissoItens', (req, res) => {
 })
 
 app.put('/compromissoItens', (req, res) => {
-  console.log(req.body)
   if (validatePayload(req, res, compromissoItens.validationSchema))
     compromissoItens.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -716,7 +710,7 @@ app.post('/compromissoRecursos', (req, res) => {
 })
 
 app.put('/compromissoRecursos', (req, res) => {
-  console.log(req.body)
+  
   if (validatePayload(req, res, compromissoRecursos.validationSchema))
     compromissoRecursos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
@@ -785,7 +779,148 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
     processPost(sqlQuery, req.body, res);
   });
 
- // SUPPORT FUNCTIONS  ---------------------------------------------------------------------- //
+
+
+
+ // USUARIOS ------------------------------------------------------------------------------------- //
+ 
+app.get('/menus/grupos', (req, res) => {
+  menus.getGrupos(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+});
+
+
+app.get('/menus/opcoesGrupos', (req, res) => {
+  menus.getOpcoesGrupos(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+});
+
+app.post('/grupoAcessos', (req, res) => {
+  if (validatePayload(req, res, menus.grupoValidationSchema))
+    menus.post(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+});
+
+app.put('/grupoAcessos', (req, res) => {
+  if (validatePayload(req, res, menus.grupoValidationSchema))
+    menus.put(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+});
+
+app.delete('/grupoAcessos/:idGrupoAcesso', (req, res) => {
+  menus.delete(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+});
+
+
+app.get('/gruposAcessos', (req, res) => {
+  sqlQuery = 'CALL lerGruposAcesso();'
+  processGetRequest(sqlQuery, {}, res);
+});
+
+// -- Opcoes Menu -------------------------------------------------------------------------------------- //
+
+
+app.get('/menus/opcoes', (req, res) => {
+  menus.getOpcoesMenu(req, res, (sqlQuery, params) => {
+    processGetRequest(sqlQuery, params, res);
+  })
+});
+
+app.post('/menus', (req, res) => {
+  if (validatePayload(req, res, menus.menuValidationSchema))
+    menus.postOpcaoMenu(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+});
+
+app.put('/menus', (req, res) => {
+  if (validatePayload(req, res, menus.menuValidationSchema))
+    menus.putOpcaoMenu(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+  });
+});
+
+app.delete('/menus/:idOpcaoMenu', (req, res) => {
+  menus.deleteOpcaoMenu(req, res, (sqlQuery, params) => {
+      processDelete(sqlQuery, params, res);
+  });
+});
+
+
+// -- Ordens Servico -------------------------------------------------------------------------------------- //
+
+  app.get('/ordensServico', (req, res) => {
+    ordensServico.get(req, res, (sqlQuery, params) => {
+      processGetRequest(sqlQuery, params, res);
+    })
+  });
+  
+  app.get('/ordemServico/inexiste', (req, res) => {
+    const params = { idOrdemServico: req.query.idOrdemServico }
+    console.log(params)
+    processGetRequest('CALL numeroOSInexistente(:idOrdemServico)', params, res);
+  });
+  
+
+  app.post('/ordensServico', (req, res) => {
+    if (validatePayload(req, res, ordensServico.validationSchema))
+      ordensServico.post(req, res, (sqlQuery, params) => {
+          processPut(sqlQuery, params, res);
+      });
+  });
+  
+  app.put('/ordensServico', (req, res) => {
+    if (validatePayload(req, res, ordensServico.validationSchema))
+      ordensServico.put(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+  });
+  
+  app.delete('/ordensServico/:idOrdemServico', (req, res) => {
+    ordensServico.delete(req, res, (sqlQuery, params) => {
+        processDelete(sqlQuery, params, res);
+    });
+  });
+
+  // -- Itens Ordens Servico --------------------------------------------------------------------------------- //
+
+  app.get('/ordensServico/itensOS/:idOrdemServico', (req, res) => {
+    ordensServico.getItensOS(req, res, (sqlQuery, params) => {
+      processGetRequest(sqlQuery, params, res);
+    })
+  });
+
+  app.post('/ordensServico/itemOS', (req, res) => {
+    if (validatePayload(req, res, ordensServico.validationSchemaItem))
+      ordensServico.postItemOS(req, res, (sqlQuery, params) => {
+          processPut(sqlQuery, params, res);
+      });
+  });
+  
+  app.put('/ordensServico/itemOS', (req, res) => {
+    if (validatePayload(req, res, ordensServico.validationSchemaItem))
+      ordensServico.putItemOS(req, res, (sqlQuery, params) => {
+        processPut(sqlQuery, params, res);
+    });
+  });
+  
+  app.delete('/ordensServico/itemOS/:idOrdemServico', (req, res) => {
+    ordensServico.deleteItemOS(req, res, (sqlQuery, params) => {
+        processDelete(sqlQuery, params, res);
+    });
+  });
+
+ // ------------------------------------------------------------------------------------------
+ //
+ // ---- SUPPORT FUNCTIONS  ------------------------------------------------------------------
+ //
+ // ------------------------------------------------------------------------------------------
  
  async function processGetRequest(sqlQuery, paramsObject, res, returnAll = false) {
  
@@ -798,7 +933,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
            res.writeHead(500);
            res.end(JSON.stringify({ message: "Error: An unexpected error occured while getting " + sqlQuery }))
            console.log(error);
-         } else if (results[0].length === 0) {
+         } else if (results[0] === undefined || results[0].length === 0) {
            res.status(204).json([]);
          } else {
             returnAll === true ? res.json(results) : res.json(results[0])
@@ -827,6 +962,7 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
          
         if (results[0][0].code) { res.status(results[0][0].code).json(results[0][0]); return; }
         
+        console.log(results)
         if (Array.isArray(results[0]) && Array.isArray(results[0][0])) {
           res.status(200).json(results[0])  // return array 
           return;
@@ -925,9 +1061,9 @@ app.delete('/compromissoRecursos/:idCompromissoRecurso', (req, res) => {
   const validData = validationSchema.validate(req.body);
   
   if (validData.error != null) {
-    res.writeHead(403);
-    res.end(JSON.stringify({ code   : 403,
-              message: 'Provided data is invalid or not properly structured',
+    res.writeHead(412);
+    res.end(JSON.stringify({ code   : 412,
+              message: 'A estrutura ou valores dos dados fornecidos é inválida.',
               payload: req.body,
               details: validData.error.details 
             }));
