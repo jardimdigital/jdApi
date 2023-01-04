@@ -37,6 +37,7 @@
    }.bind(this));
  }; 
 
+ 
  var mySqlConnParams = { connectionLimit: 100,
                          host: databaseParams.host,
                          port: databaseParams.port,
@@ -53,23 +54,23 @@
  
   // Instantiate the HTTPS server options
 
-
   const fs = require('fs');
 
   var httpsAvailable = fs.existsSync('./https/comodo')
-  console.log(httpsAvailable)
   var httpsServerOptions;
 
   if (httpsAvailable) {
-  var httpsServerOptions = {
-    cert: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.crt'),
-    key: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.key'),
-    ca: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.ca-bundle')
-    }; 
+    var httpsServerOptions = {
+      cert: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.crt'),
+      key: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.key'),
+      ca: fs.readFileSync(__dirname + '/https/comodo/newgardenadmin_com.ca-bundle')
+      }; 
   }
 
   const express = require('express');
+
   var app = express();
+
   var httpServer = http.createServer(app);
   var httpsServer = https.createServer(httpsServerOptions, app);
 
@@ -93,6 +94,7 @@
 
 
   const readXlsxFile = require('read-excel-file/node'); 
+  
   const whitelist = configEnv.get('whitelist');
  
  console.log('accessControlAllowOrigin ', config.accessControlAllowOrigin);
@@ -615,10 +617,16 @@ app.get('/manutencoes/:idCliente', (req, res) => {
 
  // COMPROMISSOS  ------------------------------------------------------------------------------------- //
  
- app.get('/compromissos', (req, res) => {
+app.get('/compromissos', (req, res) => {
   sqlQuery = 'CALL lerCompromissos(NULL, NULL);'
   processGetRequest(sqlQuery, null, res);
-})
+});
+
+app.get('/compromissos/status', (req, res) => {
+  const params = { status: req.query.status }
+  processGetRequest('CALL lerCompromissosPorStatus(:status)', params, res);
+});
+
 app.get('/compromissos/:idCliente', (req, res) => {
   sqlQuery = 'CALL lerCompromissos(:idCliente, NULL);'
   processGetRequest(sqlQuery, {idCliente: req.params.idCliente}, res);
@@ -645,7 +653,7 @@ app.get('/compromisso/status', (req, res) => {
 app.post('/compromissos', (req, res) => {
   if (validatePayload(req, res, compromissos.validationSchema))
     compromissos.post(req, res, (sqlQuery, params) => {
-        processPut(sqlQuery, params, res);
+        processPost(sqlQuery, params, res);
     });
 })
 
@@ -655,7 +663,17 @@ app.put('/compromissos', (req, res) => {
     compromissos.put(req, res, (sqlQuery, params) => {
       processPut(sqlQuery, params, res);
   });
-})
+});
+
+
+app.put('/compromisso/alteraStatus', (req, res) => {
+
+  let sqlQuery = 'CALL compromissoAlteraStatus(:idCompromisso, :status, :observacoes, :user);'
+  let params = req.body;
+  
+  processPut(sqlQuery, params, res);
+
+});
 
 app.delete('/compromissos/:idCompromisso', (req, res) => {
   compromissos.delete(req, res, (sqlQuery, params) => {
@@ -686,6 +704,14 @@ app.put('/compromissoItens', (req, res) => {
   });
 })
 
+app.put('/compromissoItens/ajustes', (req, res) => {
+
+    let sqlQuery = 'CALL compromissoItensAjustar(:idCompromissoItem, :qtdeAjustada, :valorAjustado, :observacoes, :user);'
+    let params = req.body;
+    
+    processPut(sqlQuery, params, res);
+  });
+
 app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
   compromissoItens.delete(req, res, (sqlQuery, params) => {
       processDelete(sqlQuery, params, res);
@@ -702,7 +728,6 @@ app.delete('/compromissoItens/:idCompromissoItem', (req, res) => {
 
 app.post('/compromissoRecursos', (req, res) => {
 
-  console.log('processing compromissos recursos')
   if (validatePayload(req, res, compromissoRecursos.validationSchema))
     compromissoRecursos.post(req, res, (sqlQuery, params) => {
         processPost(sqlQuery, params, res);
@@ -875,6 +900,18 @@ app.delete('/menus/:idOpcaoMenu', (req, res) => {
       });
   });
   
+  app.put('/ordemServico/aprova', (req, res) => {
+      ordensServico.putAprovaOS(req, res, (sqlQuery, params) => {
+      processPut(sqlQuery, params, res);
+    });
+  });
+  
+  app.put('/ordemServico/cancela', (req, res) => {
+    ordensServico.putCancelaOS(req, res, (sqlQuery, params) => {
+    processPut(sqlQuery, params, res);
+  });
+});
+
   app.put('/ordensServico', (req, res) => {
     if (validatePayload(req, res, ordensServico.validationSchema))
       ordensServico.put(req, res, (sqlQuery, params) => {
@@ -882,6 +919,7 @@ app.delete('/menus/:idOpcaoMenu', (req, res) => {
     });
   });
   
+
   app.delete('/ordensServico/:idOrdemServico', (req, res) => {
     ordensServico.delete(req, res, (sqlQuery, params) => {
         processDelete(sqlQuery, params, res);
@@ -921,7 +959,7 @@ app.delete('/menus/:idOpcaoMenu', (req, res) => {
  // ---- SUPPORT FUNCTIONS  ------------------------------------------------------------------
  //
  // ------------------------------------------------------------------------------------------
- 
+
  async function processGetRequest(sqlQuery, paramsObject, res, returnAll = false) {
  
      try {
@@ -936,7 +974,8 @@ app.delete('/menus/:idOpcaoMenu', (req, res) => {
          } else if (results[0] === undefined || results[0].length === 0) {
            res.status(204).json([]);
          } else {
-            returnAll === true ? res.json(results) : res.json(results[0])
+            returnAll === true ? res.json(results) : res.json(results[0]);
+            console.log(results)
          }
        });
        conn.end();
@@ -945,7 +984,6 @@ app.delete('/menus/:idOpcaoMenu', (req, res) => {
          res.writeHead(500);
          res.end(JSON.stringify({ message: "Alert! Database connection attempt failed before " + sqlQuery }));
      }
- 
  
  }
  

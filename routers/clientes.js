@@ -27,23 +27,20 @@ Creation Date: 20/08/2022
           }); 
   
 
-
-
-
   post = async function (req, res, callback) {
   
     const paramsObject = {
-    idCliente:                 req.body.idCliente,
-    nome:                      req.body.nome,
-    apelido:                   req.body.apelido,
-    tipo:                      req.body.tipo,
-    cpfCnpj:                   req.body.cpfCnpj,
-    origemContato:             req.body.origemContato,
-    dataNascimento:            req.body.dataNascimento,
-    ativo:                     req.body.ativo,
-    profissionalExclusivo:     req.body.profissionalExclusivo,
-    profissionalPreferencial:  req.body.profissionalPreferencial, 
-    observacoes:               req.body.observacoes
+        idCliente:                 req.body.idCliente,
+        nome:                      req.body.nome,
+        apelido:                   req.body.apelido,
+        tipo:                      req.body.tipo,
+        cpfCnpj:                   req.body.cpfCnpj,
+        origemContato:             req.body.origemContato,
+        dataNascimento:            req.body.dataNascimento,
+        ativo:                     req.body.ativo,
+        profissionalExclusivo:     req.body.profissionalExclusivo,
+        profissionalPreferencial:  req.body.profissionalPreferencial, 
+        observacoes:               req.body.observacoes
     };
 
     const validData = validationSchema.validate(paramsObject);
@@ -55,9 +52,10 @@ Creation Date: 20/08/2022
             details: validData.error.details
         });
     } else {
-        const putQuery = "CALL clientesCriar(:nome, :apelido, :tipo, :cpfCnpj, :origemContato, :dataNascimento, :ativo, :profissionalExclusivo, :profissionalPreferencial, :observacoes);";
-        callback(putQuery, paramsObject);
+        const postQuery = "CALL clientesCriar(:nome, :apelido, :tipo, :cpfCnpj, :origemContato, :dataNascimento, :ativo, :profissionalExclusivo, :profissionalPreferencial, :observacoes);";
+        callback(postQuery, paramsObject);
     }
+    
   }
   
   put = async function (req, res, callback) {

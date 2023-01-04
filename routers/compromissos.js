@@ -43,11 +43,9 @@ getImpressao = async function(req, res, callback) {
 
 
 post = async function (req, res, callback) {
-
   const paramsObject = req.body;
   const sqlQuery = "CALL compromissosCriar(:cliente, :endereco, :ordemServico, :data, :periodo, :veiculo, :descricao, :orcamento, :status, :usuarioAtualizacao, :profissional);";
   callback(sqlQuery, paramsObject);
-
 }
 
 

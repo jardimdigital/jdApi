@@ -28,6 +28,7 @@ const validationSchema = Joi.object({
         ultimoContato:   Joi.string().max(10).allow('', null),
         acompanhamento:  Joi.string().max(1024).allow(null, ''),
         situacao:        Joi.string().max(1).required(),
+        dataAgenda:      Joi.string().max(10).allow('', null),
         criadoPor:       Joi.string().max(45).allow(null, ''),
 }); 
 
@@ -41,8 +42,7 @@ const validationSchemaItem = Joi.object({
     observacoes:         Joi.string().max(512).allow(null, ''),
     desconto:            Joi.number().allow(null),
     descPerc:            Joi.number().allow(null),
-    valorComDesconto:    Joi.number().required()
-
+    total:               Joi.number().required()
 });
 
 get = async function(req, res, callback) {
@@ -59,7 +59,7 @@ post = async function (req, res, callback) {
 
   const paramsObject = req.body;
 
-  const sqlQuery = "CALL ordemServicosCriar(:numeroOS, :origem, :dataCriacao, :cliente, :novoEndereco, :enderecoCliente, :logradouro, :complemento, :bairro, :cidade, :georeferencia, :observacoes, :ultimoContato, :acompanhamento, :situacao, :criadoPor);";
+  const sqlQuery = "CALL ordemServicosCriar(:numeroOS, :origem, :dataCriacao, :cliente, :novoEndereco, :enderecoCliente, :logradouro, :complemento, :bairro, :cidade, :georeferencia, :observacoes, :ultimoContato, :acompanhamento, :situacao, :dataAgenda, :criadoPor);";
   callback(sqlQuery, paramsObject);
 
 }
@@ -68,10 +68,30 @@ put = async function (req, res, callback) {
 
   const paramsObject = req.body;
 
-  const sqlQuery = "CALL ordemServicosAtualizar(:idOrdemServico, :numeroOS, :origem, :dataCriacao, :cliente, :novoEndereco, :enderecoCliente, :logradouro, :complemento, :bairro, :cidade, :georeferencia, :observacoes, :ultimoContato, :acompanhamento, :situacao, :criadoPor);"
+  const sqlQuery = "CALL ordemServicosAtualizar(:idOrdemServico, :numeroOS, :origem, :dataCriacao, :cliente, :novoEndereco, :enderecoCliente, :logradouro, :complemento, :bairro, :cidade, :georeferencia, :observacoes, :ultimoContato, :acompanhamento, :situacao, :dataAgenda, :criadoPor);"
   callback(sqlQuery, paramsObject);
 
 }
+
+putAprovaOS = async function (req, res, callback) {
+
+  const paramsObject = req.body;
+
+  const sqlQuery = "CALL ordemServicosAprovar(:idOrdemServico, :dataAgenda);"
+  callback(sqlQuery, paramsObject);
+
+}
+
+
+putCancelaOS = async function (req, res, callback) {
+
+  const paramsObject = req.body;
+
+  const sqlQuery = "CALL ordemServicosCancelar(:idOrdemServico);"
+  callback(sqlQuery, paramsObject);
+
+}
+
 
 del = async function (req, res, callback) {
 
@@ -83,7 +103,7 @@ del = async function (req, res, callback) {
 
 // Itens Ordens Serviço -------------------------------------------
 
- getItensOS = async function(req, res, callback) {
+  getItensOS = async function(req, res, callback) {
     const paramsObject  =  { idOrdemServico: req.params.idOrdemServico};
     const sqlQuery = "CALL lerItensOrdemServico(:idOrdemServico)";
     callback(sqlQuery, paramsObject);
@@ -93,7 +113,7 @@ del = async function (req, res, callback) {
   
     const paramsObject = req.body;
   
-    const sqlQuery = "CALL itemOrdemServicoCriar(:ordemServico, :servico, :produto, :quantidade, :valor, :observacoes, :desconto, :descPerc, :valorComDesconto);";
+    const sqlQuery = "CALL itemOrdemServicoCriar(:ordemServico, :servico, :produto, :quantidade, :valor, :observacoes, :desconto, :descPerc, :total);";
     callback(sqlQuery, paramsObject);
   
   }
@@ -101,8 +121,8 @@ del = async function (req, res, callback) {
   putItemOS = async function (req, res, callback) {
   
     const paramsObject = req.body;
-  
-    const sqlQuery = "CALL itemOrdemServicoAtualizar(:idOrdemServicoItem, :ordemServico, :servico, :produto, :quantidade, :valor, :observacoes, :desconto, :descPerc, :valorComDesconto);"
+    const sqlQuery = "CALL itemOrdemServicoAtualizar(:idOrdemServicoItem, :ordemServico, :servico, :produto, :quantidade, :valor, :observacoes, :desconto, :descPerc, :total);"
+   
     callback(sqlQuery, paramsObject);
   
   }
@@ -119,6 +139,8 @@ del = async function (req, res, callback) {
 module.exports.get = get;  
 module.exports.post = post;
 module.exports.put = put;
+module.exports.putAprovaOS  = putAprovaOS
+module.exports.putCancelaOS = putCancelaOS
 module.exports.delete = del;
 module.exports.validationSchema = validationSchema;
 
