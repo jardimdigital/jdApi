@@ -29,7 +29,7 @@ post = async function (req, res, callback) {
 
   const paramsObject = req.body;
 
-  const sqlQuery = "CALL compromissoRecursosCriar(:compromisso, :recurso, :quantidade, :observacoes);";
+  const sqlQuery = "CALL compromissoRecursosCriar(:compromisso, :recurso, :quantidade, :observacoes, null);";
   callback(sqlQuery, paramsObject);
 
 }
